@@ -42,7 +42,8 @@ int my_pthread_create(my_pthread **hilo, void (*start_routine)(void *), void *ar
 void my_pthread_yield();
 void my_pthread_end(void *retval);
 void scheduler();
-
+int my_pthread_join(my_pthread *hilo, void **retval);
+int my_pthread_detach(my_pthread *hilo);
 
 // metodos de la cola
 void cola_init(cola_hilos *cola);

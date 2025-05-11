@@ -88,6 +88,33 @@ void my_pthread_end(void *retval) {
     scheduler(); // Llamar al scheduler para cambiar de contexto
 }
 
+int my_pthread_join(my_pthread *hilo, void **retval) {
+    if (hilo->estado == TERMINADO) {
+        hilo->thread_esperando = hilo_actual; // Establecer el hilo actual como el que está esperando
+        hilo_actual->estado = BLOQUEADO; // Cambiar el estado del hilo actual a CORRIENDO
+        scheduler(); // Llamar al scheduler para cambiar de contexto
+    }
+
+    if (retval) {
+        *retval = hilo->retval; // Devolver el valor de retorno del hilo
+    }
+    if(!hilo->vinculado) {
+        free(hilo->contexto.uc_stack.ss_sp); // Liberar la pila del hilo
+        free(hilo); // Liberar el hilo
+    }
+    return 0; // Éxito
+}
+
+int my_pthread_detach(my_pthread *hilo) {
+    if (hilo->estado == TERMINADO) {
+        free(hilo->contexto.uc_stack.ss_sp); // Liberar la pila del hilo
+        free(hilo); // Liberar el hilo
+    } else {
+        hilo->vinculado = 1; // Marcar el hilo como vinculado
+    }
+    return 0; // Éxito
+}
+
 void scheduler() {
     my_pthread *prev = hilo_actual;
     hilo_actual = desencolar(&cola); // Desencolar el siguiente hilo
