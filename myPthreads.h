@@ -14,6 +14,12 @@ typedef enum {
     TERMINADO
 } thread_state_t;
 
+typedef enum{
+    RR,
+    SORTEO,
+    TIEMPOREAL
+} tipo_scheduler;
+
 // Estructura de hilo
 typedef struct {
     int tid;
@@ -22,6 +28,11 @@ typedef struct {
     void *retval;
     int vinculado;
     struct my_pthread *thread_esperando;
+
+    // campos para scheduling
+    int tickets; // sorteo
+    int deadlineSeconds; // tiempo real
+    int quantum; // RR
 } my_pthread;
 
 // nodo para cola
@@ -37,6 +48,12 @@ typedef struct {
     int size;
 } cola_hilos;
 
+typedef struct {
+    int bloqueado;
+    my_pthread *duenio;
+    cola_hilos *cola_esperando;
+} my_mutex;
+
 // metodos
 int my_pthread_create(my_pthread **hilo, void (*start_routine)(void *), void *arg);
 void my_pthread_yield();
@@ -49,6 +66,16 @@ int my_pthread_detach(my_pthread *hilo);
 void cola_init(cola_hilos *cola);
 void encolar(cola_hilos *cola, my_pthread *hilo);
 my_pthread *desencolar(cola_hilos *cola);
+
+// metodos del mutex
+int my_mutex_init(my_mutex *mutex);
+int my_mutex_lock(my_mutex *mutex);
+int my_mutex_unlock(my_mutex *mutex);
+int my_mutex_destroy(my_mutex *mutex);
+int my_mutex_trylock(my_mutex *mutex);
+
+// funcion adicional 
+void my_pthread_chsched(my_pthread *hilo);
 
 
 #endif

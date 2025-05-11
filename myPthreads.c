@@ -132,3 +132,80 @@ void scheduler() {
         setcontext(&hilo_actual->contexto); // Establecer el contexto del nuevo hilo
     }
 }
+
+int my_mutex_init(my_mutex *mutex) {
+    if(!mutex) {
+        printf("Error: mutex no valido\n");
+        return -1; // Error: mutex no válido
+    }
+    mutex->bloqueado = 0;
+    mutex->duenio = NULL;
+    cola_init(mutex->cola_esperando);
+    return 0; // Éxito
+}
+
+int my_mutex_lock(my_mutex *mutex) {
+    if(!mutex) {
+        printf("Error: mutex no valido\n");
+        return -1; // Error: mutex no válido
+    }
+    if(mutex->bloqueado && mutex->duenio == hilo_actual) {
+        return -1; // Error: el hilo actual ya es el dueño del mutex
+    }
+    while(__sync_lock_test_and_set(&mutex->bloqueado, 1)) { // lock seguro sin usar asm, es una operación atómica, evita condiciones de carrera
+        encolar(mutex->cola_esperando, hilo_actual); // Encolar el hilo actual
+        hilo_actual->estado = BLOQUEADO; // Cambiar el estado del hilo actual a BLOQUEADO
+        scheduler(); // Llamar al scheduler para cambiar de contexto
+    }
+    mutex->duenio = hilo_actual; // Establecer el hilo actual como dueño del mutex
+    return 0; // Éxito
+}
+
+int my_mutex_unlock(my_mutex *mutex) {
+    if(!mutex || mutex->duenio != hilo_actual) {
+        printf("Error: mutex no valido o el hilo actual no es el dueño\n");
+        return -1; // Error: mutex no válido o el hilo actual no es el dueño
+    }
+
+    mutex->duenio = NULL; // Liberar el dueño del mutex
+    __sync_lock_release(&mutex->bloqueado); // Liberar el mutex de forma atomica
+
+    my_pthread *hilo_esperando = desencolar(mutex->cola_esperando); // Desencolar el hilo que estaba esperando
+    if(hilo_esperando){
+        hilo_esperando->estado = LISTO; // Cambiar el estado del hilo esperando a LISTO
+        encolar(&cola, hilo_esperando); // Reencolar el hilo esperando
+    }
+    return 0; // Éxito
+}
+
+int my_mutex_destroy(my_mutex *mutex) {
+    if(!mutex) {
+        printf("Error: mutex no valido\n");
+        return -1; // Error: mutex no válido
+    }
+    if(mutex->bloqueado) {
+        printf("Error: mutex bloqueado\n");
+        return -1; // Error: mutex bloqueado
+    }
+    if(mutex->cola_esperando->size > 0) {
+        printf("Error: hay hilos esperando en la cola\n");
+        return -1; // Error: hay hilos esperando en la cola
+    }
+    free(mutex->cola_esperando); // Liberar la cola de esperando
+    return 0; // Éxito
+}
+
+int my_mutex_trylock(my_mutex *mutex) { // intenta bloquear el mutex sin esperar
+    if(!mutex) {
+        printf("Error: mutex no valido\n");
+        return -1; // Error: mutex no válido
+    }
+    if(mutex->bloqueado) {
+        return -1; // Mutex ya bloqueado
+    }
+    __sync_lock_test_and_set(&mutex->bloqueado, 1); // Bloquear el mutex de forma atomica
+    mutex->duenio = hilo_actual; // Establecer el hilo actual como dueño del mutex
+    return 0; // Éxito
+}
+
+
