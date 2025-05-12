@@ -1,5 +1,6 @@
 #include "myPthreads.h"
 
+
 cola_hilos cola;
 my_pthread *hilo_actual = NULL;
 int tid_contador = 1;
@@ -42,95 +43,97 @@ my_pthread *desencolar(cola_hilos *cola) {
     return hilo;
 }
 
-int my_pthread_create(my_pthread **hilo, void (*start_routine)(void *), void *arg) {
+
+int my_pthread_create(my_pthread **hilo, tipo_scheduler tipo, void (*start_routine)(void *), void *arg) {
+
     my_pthread *nuevo_hilo = (my_pthread *)malloc(sizeof(my_pthread));
-    if (nuevo_hilo == NULL) {
-        return -1; // Error al asignar memoria
-    }
+
+    if (nuevo_hilo == NULL) return -1;
+
     getcontext(&nuevo_hilo->contexto);
-    nuevo_hilo->contexto.uc_stack.ss_sp = malloc(STACK_SIZE); // Asignar memoria para la pila
-    nuevo_hilo->contexto.uc_stack.ss_size = STACK_SIZE; // Tamaño de la pila
-    nuevo_hilo->contexto.uc_link = NULL; // No hay contexto de retorno
+    nuevo_hilo->contexto.uc_stack.ss_sp = malloc(STACK_SIZE);
+    nuevo_hilo->contexto.uc_stack.ss_size = STACK_SIZE;
+    nuevo_hilo->contexto.uc_link = NULL;
 
     nuevo_hilo->tid = tid_contador++;
     nuevo_hilo->estado = LISTO;
     nuevo_hilo->retval = NULL;
     nuevo_hilo->thread_esperando = NULL;
     nuevo_hilo->vinculado = 0;
-    makecontext(&nuevo_hilo->contexto, (void (*)(void))start_routine, 1, arg); // Crear el contexto para la función del hilo
-    encolar(&cola, nuevo_hilo); // Encolar el nuevo hilo
-    if (hilo) {
-        *hilo = nuevo_hilo; // Devolver el hilo creado
-    }
-    return 0; // Éxito
+    nuevo_hilo->scheduler = tipo;
+
+    makecontext(&nuevo_hilo->contexto, (void (*)(void))start_routine, 1, arg);
+    
+    printf("METIENDO AL CREAR\n");
+    
+    meter(tipo,nuevo_hilo);
+
+    if (hilo) *hilo = nuevo_hilo;
+
+    return 0;
 }
 
 void my_pthread_yield() {
+    
+    //printf("yield\n");
+    
     if (hilo_actual->estado != TERMINADO) {
-        hilo_actual->estado = LISTO; // Cambiar el estado del hilo actual a LISTO
-        encolar(&cola, hilo_actual); // Reencolar el hilo actual
+        hilo_actual->estado = LISTO;
+        meter(hilo_actual->scheduler,hilo_actual);
     }
-    scheduler(); // Llamar al scheduler para cambiar de contexto
+    scheduler(); // cambiar de contexto
 }
 
 void my_pthread_end(void *retval) {
-    hilo_actual->estado = TERMINADO; // Cambiar el estado del hilo actual a TERMINADO
-    hilo_actual->retval = retval; // Guardar el valor de retorno
 
-    if(hilo_actual->thread_esperando != NULL) {
-        encolar(&cola, hilo_actual->thread_esperando); // Reencolar el hilo que estaba esperando
+    //printf("END\n");
+
+    hilo_actual->estado = TERMINADO;
+    hilo_actual->retval = retval;
+    tipo_scheduler tipo = hilo_actual->scheduler;
+
+    if (hilo_actual->thread_esperando != NULL) {
+
+        meter(tipo,hilo_actual->thread_esperando);
+    }
+    
+    
+    
+    if (hilo_actual->vinculado) {
+        free(hilo_actual->contexto.uc_stack.ss_sp);
+        free(hilo_actual);
     }
 
-    if(hilo_actual->vinculado) {
-        free(hilo_actual->contexto.uc_stack.ss_sp); // Liberar la pila del hilo
-        free(hilo_actual); // Liberar el hilo
-    }
-    scheduler(); // Llamar al scheduler para cambiar de contexto
+    scheduler();
 }
 
 int my_pthread_join(my_pthread *hilo, void **retval) {
-    if (hilo->estado == TERMINADO) {
-        hilo->thread_esperando = hilo_actual; // Establecer el hilo actual como el que está esperando
-        hilo_actual->estado = BLOQUEADO; // Cambiar el estado del hilo actual a CORRIENDO
-        scheduler(); // Llamar al scheduler para cambiar de contexto
+    if (hilo->estado != TERMINADO) {
+        hilo->thread_esperando = hilo_actual;
+        hilo_actual->estado = BLOQUEADO;
+        scheduler();
     }
 
     if (retval) {
-        *retval = hilo->retval; // Devolver el valor de retorno del hilo
+        *retval = hilo->retval;
     }
-    if(!hilo->vinculado) {
-        free(hilo->contexto.uc_stack.ss_sp); // Liberar la pila del hilo
-        free(hilo); // Liberar el hilo
+
+    if (!hilo->vinculado) {
+        free(hilo->contexto.uc_stack.ss_sp);
+        free(hilo);
     }
-    return 0; // Éxito
+
+    return 0;
 }
 
 int my_pthread_detach(my_pthread *hilo) {
     if (hilo->estado == TERMINADO) {
-        free(hilo->contexto.uc_stack.ss_sp); // Liberar la pila del hilo
-        free(hilo); // Liberar el hilo
+        free(hilo->contexto.uc_stack.ss_sp);
+        free(hilo);
     } else {
-        hilo->vinculado = 1; // Marcar el hilo como vinculado
+        hilo->vinculado = 1;
     }
-    return 0; // Éxito
-}
-
-void scheduler() {
-    my_pthread *prev = hilo_actual;
-    hilo_actual = desencolar(&cola); // Desencolar el siguiente hilo
-    if (hilo_actual == NULL) {
-
-        exit(0); // No hay más hilos, salir
-    }
-
-    hilo_actual->estado = CORRIENDO; // Cambiar el estado del nuevo hilo a CORRIENDO
-
-    if(prev && prev->estado != TERMINADO) {
-        swapcontext(&prev->contexto, &hilo_actual->contexto); // Cambiar de contexto
-    }
-    else {
-        setcontext(&hilo_actual->contexto); // Establecer el contexto del nuevo hilo
-    }
+    return 0;
 }
 
 int my_mutex_init(my_mutex *mutex) {

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
 #define STACK_SIZE (640 * 1024) 
 
 typedef enum {
@@ -29,10 +30,16 @@ typedef struct {
     int vinculado;
     struct my_pthread *thread_esperando;
 
+    // tipo de scheduler asociado
+    tipo_scheduler scheduler;
+
     // campos para scheduling
     int tickets; // sorteo
     int deadlineSeconds; // tiempo real
     int quantum; // RR
+    
+
+
 } my_pthread;
 
 // nodo para cola
@@ -55,7 +62,7 @@ typedef struct {
 } my_mutex;
 
 // metodos
-int my_pthread_create(my_pthread **hilo, void (*start_routine)(void *), void *arg);
+int my_pthread_create(my_pthread **hilo, tipo_scheduler tipo, void (*start_routine)(void *), void *arg);
 void my_pthread_yield();
 void my_pthread_end(void *retval);
 void scheduler();
