@@ -1,0 +1,10 @@
+ventana:
+  rows: 50
+  columns: 55
+
+figura: |
+  | | |x| | |
+  | |x|x|x| |
+  |x|x|x|x|x|
+  | |x|x|x| |
+  | |x|x|x| |
