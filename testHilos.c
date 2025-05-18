@@ -43,14 +43,20 @@ int main() {
     my_pthread hiloPrincipal;
     hiloPrincipal.tid = 0;
     hiloPrincipal.estado = CORRIENDO;
-    hiloPrincipal.scheduler = tipo;
+    hiloPrincipal.scheduler = SORTEO;
     hilo_actual = &hiloPrincipal;
 
     my_pthread *h1, *h2, *h3, *h4;
     my_pthread_create(&h1, tipo,hello_fast, "Hilo 1");
-    my_pthread_create(&h2, tipo,hello, "Hilo 2");
+    my_pthread_create(&h2, tipo,hello_fast, "Hilo 2");
     my_pthread_create(&h3, tipo,hello_fast, "Hilo 3");
-    my_pthread_create(&h4, tipo,hello, "Hilo 4");
+    my_pthread_create(&h4, tipo,hello_fast, "Hilo 4");
+    
+    
+    my_pthread_chsched(h1,SORTEO);
+    my_pthread_chsched(h2,SORTEO);
+    my_pthread_chsched(h3,SORTEO);
+    my_pthread_chsched(h4,SORTEO);
 
     // Configurar atributos según el tipo de scheduler
     h1->tickets = 10;

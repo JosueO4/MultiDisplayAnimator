@@ -83,7 +83,7 @@ int my_mutex_destroy(my_mutex *mutex);
 int my_mutex_trylock(my_mutex *mutex);
 
 // funcion adicional 
-void my_pthread_chsched(my_pthread *hilo);
+void my_pthread_chsched(my_pthread *hilo, tipo_scheduler nuevo_scheduler);
 
 
 #endif

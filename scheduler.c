@@ -53,6 +53,50 @@ my_pthread *scheduler_lottery() {
     return NULL;
 }
 
+int quitar_hilo_de_cola(cola_hilos *cola, my_pthread *hilo) {
+    nodo *actual = cola->head;
+    nodo *anterior = NULL;
+
+    while (actual != NULL) {
+        if (actual->hilo == hilo) {
+            if (anterior != NULL) {
+                anterior->siguiente = actual->siguiente;
+            } else {
+                cola->head = actual->siguiente;
+            }
+
+            if (actual == cola->tail) {
+                cola->tail = anterior;
+            }
+
+            free(actual);
+            cola->size--;
+            return 1; // éxito
+        }
+        anterior = actual;
+        actual = actual->siguiente;
+    }
+
+    return 0; // hilo no encontrado
+}
+
+void sacar(my_pthread* hilo, tipo_scheduler tipo){
+
+  if (tipo == RR) {
+      printf("Borrado de la cola RR\n");
+      quitar_hilo_de_cola(&cola_RR, hilo);
+  } else if (tipo== SORTEO) {
+      printf("Borrado de la cola LT\n");
+      quitar_hilo_de_cola(&cola_lottery, hilo);
+  } else if (tipo == TIEMPOREAL) {
+      printf("Borrado de la cola RT\n");
+      quitar_hilo_de_cola(&lista_real_time, hilo);
+  }
+}
+
+
+
+
 void scheduler() {
 
     my_pthread *prev = hilo_actual;
@@ -70,14 +114,14 @@ void scheduler() {
     }
     
     if(tipo == RR){
-        //printf("RR2\n");
+        printf("RR2\n");
         hilo_actual = scheduler_rr();
 
     } else if(tipo == TIEMPOREAL){
-        //printf("RT2\n");
+        printf("RT2\n");
         hilo_actual = scheduler_rt();
     }else{
-        //printf("LT2\n");
+        printf("LT2\n");
         hilo_actual = scheduler_lottery();
     }
 
@@ -128,13 +172,13 @@ void meter(tipo_scheduler tipo, my_pthread* nuevo_hilo){
 
     if (tipo == TIEMPOREAL) {
         insertar_ordenado_por_prioridad(&lista_real_time,nuevo_hilo);
-         //printf("RT\n");
+         printf("RT\n");
     }else if(tipo == RR){
-        //printf("RR\n");
+        printf("RR\n");
         encolar(&cola_RR, nuevo_hilo);   
     }
     else {
-        //printf("LT\n");
+        printf("LT\n");
         encolar(&cola_lottery, nuevo_hilo);
     }
 }

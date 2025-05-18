@@ -136,6 +136,26 @@ int my_pthread_detach(my_pthread *hilo) {
     return 0;
 }
 
+void my_pthread_chsched(my_pthread *hilo, tipo_scheduler nuevo_scheduler){
+  
+
+  if(hilo == hilo_actual){
+    
+    printf("Papi no se puede cambiar un scheduler del hilo en ejecución");
+  
+  }
+  
+  tipo_scheduler tipo = hilo->scheduler;
+  
+  sacar(hilo, tipo);
+  
+  hilo->scheduler = nuevo_scheduler;
+  
+  meter(nuevo_scheduler, hilo);
+  
+  printf("Cambio realizado correctamente\n");
+}
+
 int my_mutex_init(my_mutex *mutex) {
     if(!mutex) {
         printf("Error: mutex no valido\n");
