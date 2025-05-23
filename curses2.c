@@ -65,6 +65,61 @@ void dibujar_figura(int start_y, int start_x) {
     }
 }
 
+
+
+
+
+
+void copiar_figura(char destino[MAX_ROWS][MAX_COLS], char origen[MAX_ROWS][MAX_COLS], int rows, int cols) {
+    for (int i = 0; i < rows; i++)
+        for (int j = 0; j < cols; j++)
+            destino[i][j] = origen[i][j];
+}
+
+void rotar_90() {
+    char nueva[MAX_ROWS][MAX_COLS];
+    int new_rows = fig_cols;
+    int new_cols = fig_rows;
+
+    for (int i = 0; i < fig_rows; i++) {
+        for (int j = 0; j < fig_cols; j++) {
+            nueva[j][fig_rows - 1 - i] = figura[i][j];
+        }
+    }
+
+    copiar_figura(figura, nueva, new_rows, new_cols);
+    fig_rows = new_rows;
+    fig_cols = new_cols;
+}
+
+void rotar_180() {
+    char nueva[MAX_ROWS][MAX_COLS];
+
+    for (int i = 0; i < fig_rows; i++) {
+        for (int j = 0; j < fig_cols; j++) {
+            nueva[fig_rows - 1 - i][fig_cols - 1 - j] = figura[i][j];
+        }
+    }
+
+    copiar_figura(figura, nueva, fig_rows, fig_cols);
+}
+
+void rotar_270() {
+    char nueva[MAX_ROWS][MAX_COLS];
+    int new_rows = fig_cols;
+    int new_cols = fig_rows;
+
+    for (int i = 0; i < fig_rows; i++) {
+        for (int j = 0; j < fig_cols; j++) {
+            nueva[fig_cols - 1 - j][i] = figura[i][j];
+        }
+    }
+
+    copiar_figura(figura, nueva, new_rows, new_cols);
+    fig_rows = new_rows;
+    fig_cols = new_cols;
+}
+
 int main() {
     leer_figura("config.yaml");
 
@@ -82,21 +137,27 @@ int main() {
     int pos_x = 0;
     int pos_y = 2;
 
-    while (1) {
-        clear();
-        dibujar_figura(pos_y, pos_x);
-        refresh();
+while (1) {
+    clear();
+    dibujar_figura(pos_y, pos_x);
+    refresh();
 
-        pos_x++;
-        if (pos_x + fig_cols >= max_x)
-            pos_x = 0;
+    pos_x++;
+    if (pos_x + fig_cols >= max_x)
+        pos_x = 0;
 
-        usleep(100000);
+    usleep(100000);
 
-        int ch = getch();
-        if (ch == 'q')
-            break;
-    }
+    int ch = getch();
+    if (ch == 'q')
+        break;
+    else if (ch == 'r') // rotar 90°
+        rotar_90();
+    else if (ch == 't') // rotar 180°
+        rotar_180();
+    else if (ch == 'y') // rotar 270°
+        rotar_270();
+}
 
     endwin();
     return 0;

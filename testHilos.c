@@ -32,7 +32,7 @@ int main() {
     
     // AQUI SE PUEDE CAMBIAR EL SCHEDULER DE TODOS (UTIL PARA HACER PRUEBAS XD)
     
-    tipo_scheduler tipo = TIEMPOREAL;
+    tipo_scheduler tipo = RR;
     
     
     cola_init(&cola);
@@ -43,21 +43,21 @@ int main() {
     my_pthread hiloPrincipal;
     hiloPrincipal.tid = 0;
     hiloPrincipal.estado = CORRIENDO;
-    hiloPrincipal.scheduler = SORTEO;
+    hiloPrincipal.scheduler = RR;
     hilo_actual = &hiloPrincipal;
 
     my_pthread *h1, *h2, *h3, *h4;
-    my_pthread_create(&h1, tipo,hello_fast, "Hilo 1");
+    my_pthread_create(&h1, tipo,hello, "Hilo 1");
     my_pthread_create(&h2, tipo,hello_fast, "Hilo 2");
     my_pthread_create(&h3, tipo,hello_fast, "Hilo 3");
-    my_pthread_create(&h4, tipo,hello_fast, "Hilo 4");
+    my_pthread_create(&h4, tipo,hello, "Hilo 4");
     
-    
-    my_pthread_chsched(h1,SORTEO);
-    my_pthread_chsched(h2,SORTEO);
-    my_pthread_chsched(h3,SORTEO);
-    my_pthread_chsched(h4,SORTEO);
-
+    /*
+    my_pthread_chsched(h1,RR);
+    my_pthread_chsched(h2,RR);
+    my_pthread_chsched(h3,RR);
+    my_pthread_chsched(h4,RR);
+    */
     // Configurar atributos según el tipo de scheduler
     h1->tickets = 10;
     h2->tickets = 15;
@@ -68,12 +68,8 @@ int main() {
     h2->deadlineSeconds = 3;
     h3->deadlineSeconds = 15;
     h4->deadlineSeconds = 2;
-
-    h1->quantum = 2;
-    h2->quantum = 2;
-    h3->quantum = 2;
-    h4->quantum = 2;
-
+    
+    iniciar_timer_scheduler();
     scheduler();
 
     return 0;
