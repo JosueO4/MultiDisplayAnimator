@@ -28,6 +28,7 @@ void encolar(cola_hilos *cola, my_pthread *hilo) {
 
 my_pthread *desencolar(cola_hilos *cola) {
     if (cola->head == NULL) {
+        //printf("NO HABÍA NADA\n");
         return NULL;
     }
 
@@ -36,6 +37,7 @@ my_pthread *desencolar(cola_hilos *cola) {
 
     cola->head = nodo_a_eliminar->siguiente;
     if (cola->head == NULL) {
+        //printf("NO HABÍA NADA2\n");
         cola->tail = NULL;
     }
     free(nodo_a_eliminar);
@@ -44,7 +46,7 @@ my_pthread *desencolar(cola_hilos *cola) {
 }
 
 
-int my_pthread_create(my_pthread **hilo, tipo_scheduler tipo, void (*start_routine)(void *), void *arg) {
+int my_pthread_create(my_pthread **hilo, tipo_scheduler tipo, void (*start_routine)(void *), void *arg, int deadline) {
 
     my_pthread *nuevo_hilo = (my_pthread *)malloc(sizeof(my_pthread));
 
@@ -61,7 +63,7 @@ int my_pthread_create(my_pthread **hilo, tipo_scheduler tipo, void (*start_routi
     nuevo_hilo->thread_esperando = NULL;
     nuevo_hilo->vinculado = 0;
     nuevo_hilo->scheduler = tipo;
-
+    nuevo_hilo->deadlineSeconds = deadline;
     makecontext(&nuevo_hilo->contexto, (void (*)(void))start_routine, 1, arg);
     
     printf("METIENDO AL CREAR\n");
@@ -74,16 +76,17 @@ int my_pthread_create(my_pthread **hilo, tipo_scheduler tipo, void (*start_routi
 }
 
 void my_pthread_yield() {
-    
-    //printf("yield\n");
+    if (!hilo_actual) return;
     
     if (hilo_actual->estado != TERMINADO) {
         hilo_actual->estado = LISTO;
-        meter(hilo_actual->scheduler,hilo_actual);
+        // Para SORTEO no se vuelve a encolar, ya está en la lista
+        if (hilo_actual->scheduler == RR) {
+            meter(hilo_actual->scheduler, hilo_actual);
+        }
     }
-    scheduler(); // cambiar de contexto
+    scheduler();
 }
-
 void my_pthread_end(void *retval) {
 
     //printf("END\n");
@@ -91,7 +94,8 @@ void my_pthread_end(void *retval) {
     hilo_actual->estado = TERMINADO;
     hilo_actual->retval = retval;
     tipo_scheduler tipo = hilo_actual->scheduler;
-
+    sacar(hilo_actual,tipo);
+    
     if (hilo_actual->thread_esperando != NULL) {
 
         meter(tipo,hilo_actual->thread_esperando);

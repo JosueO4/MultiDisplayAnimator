@@ -63,7 +63,7 @@ typedef struct {
 } my_mutex;
 
 // metodos
-int my_pthread_create(my_pthread **hilo, tipo_scheduler tipo, void (*start_routine)(void *), void *arg);
+int my_pthread_create(my_pthread **hilo, tipo_scheduler tipo, void (*start_routine)(void *), void *arg, int deadline);
 void my_pthread_yield();
 void my_pthread_end(void *retval);
 void scheduler();
