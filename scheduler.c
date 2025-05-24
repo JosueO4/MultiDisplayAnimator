@@ -255,7 +255,8 @@ void scheduler() {
     
     if (hilo_actual == NULL) {
         printf("No hay más hilos activos. Saliendo...\n");
-        exit(0);
+        return;
+        //exit(0);
     }
         
     hilo_actual->estado = CORRIENDO;

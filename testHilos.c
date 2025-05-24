@@ -5,9 +5,28 @@ extern cola_hilos cola_RR;
 extern cola_hilos cola_lottery;
 extern cola_hilos lista_real_time;
 extern my_pthread *hilo_actual;
+int contador_global = 0;
+my_mutex mutex_global;
 
 
+void contador_seguro(void *arg) {
+    char *nombre = (char *)arg;
+    for(int i = 0; i < 1000; i++) {
+        my_mutex_lock(&mutex_global);    // Entrar a la sección crítica
 
+        int valor = contador_global;
+        valor++;
+        contador_global = valor;
+
+        my_mutex_unlock(&mutex_global);  // Salir de la sección crítica
+        
+        printf("VAlor: %d\n",contador_global);
+        // Sin yield aquí para probar contención
+    }
+
+    printf("Hilo [%s] terminado\n", nombre);
+    my_pthread_end(NULL);
+}
 
 void hello(void *arg) {
     char *str = (char *)arg;
@@ -32,12 +51,8 @@ void hello_fast(void *arg){
 }
 
 int main() {
-    
-    // AQUI SE PUEDE CAMBIAR EL SCHEDULER DE TODOS (UTIL PARA HACER PRUEBAS XD)
-    
-    tipo_scheduler tipo = TIEMPOREAL;
-    
-    
+    tipo_scheduler tipo = RR;  // Podés probar también con Lottery o Tiempo Real
+
     cola_init(&cola);
     cola_init(&cola_RR);
     cola_init(&cola_lottery);
@@ -46,38 +61,28 @@ int main() {
     my_pthread hiloPrincipal;
     hiloPrincipal.tid = 0;
     hiloPrincipal.estado = CORRIENDO;
-    hiloPrincipal.scheduler = TIEMPOREAL;
+    hiloPrincipal.scheduler = tipo;
     hilo_actual = &hiloPrincipal;
+    
+    printf("Hilo principal creado\n");
+    mutex_global.cola_esperando = &cola;
+    my_mutex_init(&mutex_global); // Inicializar el mutex
+    
+    printf("HICE el mutex BIEN\n");
+    
+    my_pthread *h1, *h2, *h3, *h4;
 
-my_pthread *h1, *h2, *h3, *h4, *h5, *h6, *h7, *h8, *h9, *h10;
-
-
-// Se agrega deadline como parametro al crear porque al meterse en cola debe ser ordenado con base a deadline
-
-my_pthread_create(&h1, tipo, hello, "Hilo 1",5);
-my_pthread_create(&h2, tipo, hello, "Hilo 2",1);
-my_pthread_create(&h3, tipo, hello, "Hilo 3",6);
-my_pthread_create(&h4, tipo, hello, "Hilo 4",7);
-my_pthread_create(&h5, tipo, hello, "Hilo 5",3);
-my_pthread_create(&h6, tipo, hello, "Hilo 6",2);
-my_pthread_create(&h7, tipo, hello, "Hilo 7",4);
-my_pthread_create(&h8, tipo, hello, "Hilo 8",8);
-my_pthread_create(&h9, tipo, hello, "Hilo 9",9);
-my_pthread_create(&h10, tipo, hello, "Hilo 10",10);
-
-h1->tickets = 10;
-h2->tickets = 15;
-h3->tickets = 5;
-h4->tickets = 70;
-h5->tickets = 20;
-h6->tickets = 25;
-h7->tickets = 30;
-h8->tickets = 5;
-h9->tickets = 50;
-h10->tickets = 40;
-
+    my_pthread_create(&h1, tipo, contador_seguro, "A", 0);
+    my_pthread_create(&h2, tipo, contador_seguro, "B", 0);
+    my_pthread_create(&h3, tipo, contador_seguro, "C", 0);
+    my_pthread_create(&h4, tipo, contador_seguro, "D", 0);
+    
+    printf("HICE LOS HILOS BIEN\n");
+    
     iniciar_timer_scheduler();
     scheduler();
+
+    printf("Valor final del contador: %d\n", contador_global);
 
     return 0;
 }

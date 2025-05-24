@@ -12,8 +12,13 @@ int fig_rows = 0;
 int fig_cols = 0;
 int ventana_rows = 24;   // Por defecto
 int ventana_cols = 80;   // Por defecto
-
+int leyendo_figura = 0;
+int leyendo_tiempo = 0;
+int tiempo_inicio_ms = 0;
+int tiempo_fin_ms = 10000;
 void leer_figura(const char *filename) {
+
+
     FILE *file = fopen(filename, "r");
     if (!file) {
         perror("No se pudo abrir el archivo YAML");
@@ -29,6 +34,15 @@ void leer_figura(const char *filename) {
             ventana_rows = atoi(strchr(line, ':') + 1);
         } else if (strstr(line, "columns:")) {
             ventana_cols = atoi(strchr(line, ':') + 1);
+        } else if (strstr(line, "tiempo:")) {
+            leyendo_tiempo = 1;
+            continue;
+        } else if (leyendo_tiempo && strstr(line, "inicio:")) {
+            printf("ENCONTRÉ EL TIEMPO DE INICIO\n");
+            tiempo_inicio_ms = atoi(strchr(line, ':') + 1);
+        } else if (leyendo_tiempo && strstr(line, "fin:")) {
+            tiempo_fin_ms = atoi(strchr(line, ':') + 1);
+        
         } else if (strstr(line, "figura:")) {
             leyendo_figura = 1;
             continue;
@@ -121,8 +135,11 @@ void rotar_270() {
 }
 
 int main() {
+        
     leer_figura("config.yaml");
 
+    usleep(tiempo_inicio_ms * 1000);
+    
     initscr();
     noecho();
     curs_set(FALSE);
@@ -137,6 +154,8 @@ int main() {
     int pos_x = 0;
     int pos_y = 2;
 
+int elapsed_ms = 0;
+
 while (1) {
     clear();
     dibujar_figura(pos_y, pos_x);
@@ -147,17 +166,22 @@ while (1) {
         pos_x = 0;
 
     usleep(100000);
+    elapsed_ms += 100;
+
+    if (elapsed_ms >= tiempo_fin_ms - tiempo_inicio_ms)
+        break;
 
     int ch = getch();
     if (ch == 'q')
         break;
-    else if (ch == 'r') // rotar 90°
+    else if (ch == 'r')
         rotar_90();
-    else if (ch == 't') // rotar 180°
+    else if (ch == 't')
         rotar_180();
-    else if (ch == 'y') // rotar 270°
+    else if (ch == 'y')
         rotar_270();
 }
+
 
     endwin();
     return 0;

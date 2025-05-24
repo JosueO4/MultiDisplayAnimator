@@ -2,9 +2,14 @@ ventana:
   rows: 50
   columns: 55
 
+
+tiempo:
+  inicio: 8000     # milisegundos (2 segundos)
+  fin: 20000       # milisegundos (10 segundos)
+  
 figura: |
-   | | |x| | |
    | |x|x|x| |
-   |x|x|x|x|x|
-   | |x|x|x| |
+   |x| | | |x|
+   |x| |x| | |
+   |x| | | |x|
    | |x|x|x| |
