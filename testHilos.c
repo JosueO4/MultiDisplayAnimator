@@ -7,7 +7,7 @@ extern cola_hilos lista_real_time;
 extern my_pthread *hilo_actual;
 int contador_global = 0;
 my_mutex mutex_global;
-
+extern ucontext_t contexto_principal;
 
 void contador_seguro(void *arg) {
     char *nombre = (char *)arg;
@@ -50,6 +50,8 @@ void hello_fast(void *arg){
     my_pthread_end(NULL);
 }
 
+
+
 int main() {
     tipo_scheduler tipo = RR;  // Podés probar también con Lottery o Tiempo Real
 
@@ -79,10 +81,10 @@ int main() {
     
     printf("HICE LOS HILOS BIEN\n");
     
+    getcontext(&contexto_principal); // Guarda el contexto principal
     iniciar_timer_scheduler();
     scheduler();
 
-    printf("Valor final del contador: %d\n", contador_global);
-
+    printf("Valor final del contador: %d\n", contador_global);  
     return 0;
 }

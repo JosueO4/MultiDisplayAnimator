@@ -1,4 +1,3 @@
-
 #include "myPthreads.h"
 #include "scheduler.h"
 #include <sys/time.h>
@@ -225,7 +224,7 @@ void sacar(my_pthread* hilo, tipo_scheduler tipo){
       printf("Borrado de la cola LT\n");
       quitar_hilo_de_cola(&cola_lottery, hilo);
   } else if (tipo == TIEMPOREAL) {
-      printf("Borrado de la cola RT\n");
+      //printf("Borrado de la cola RT\n");
       quitar_hilo_de_cola(&lista_real_time, hilo);
   }
 }
@@ -245,7 +244,7 @@ void scheduler() {
 
     } else if(tipo == TIEMPOREAL){
         //printf("RT2\n");
-        imprimir_lista_real_time(&lista_real_time);
+        //imprimir_lista_real_time(&lista_real_time);
         hilo_actual = scheduler_rt();
     }else{
         //printf("LT2\n");
@@ -256,7 +255,6 @@ void scheduler() {
     if (hilo_actual == NULL) {
         printf("No hay más hilos activos. Saliendo...\n");
         return;
-        //exit(0);
     }
         
     hilo_actual->estado = CORRIENDO;

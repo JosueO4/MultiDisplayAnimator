@@ -1,15 +1,23 @@
 ventana:
   rows: 50
-  columns: 55
+  columns: 100
 
-
-tiempo:
-  inicio: 8000     # milisegundos (2 segundos)
-  fin: 20000       # milisegundos (10 segundos)
-  
-figura: |
-   | |x|x|x| |
-   |x| | | |x|
-   |x| |x| | |
-   |x| | | |x|
-   | |x|x|x| |
+figuras:
+  - inicio: 1000
+    fin: 9000
+    pos_y: 2
+    figura: |
+      | |x|x|x| |
+      |x| | | |x|
+      |x| |x| | |
+      |x| | | |x|
+      | |x|x|x| |
+  - inicio: 10000
+    fin: 15000
+    pos_y: 12
+    figura: |
+      | |o|o|o| |
+      |o| | | |o|
+      |o| |o| | |
+      |o| | | |o|
+      | |o|o|o| |

@@ -1,9 +1,12 @@
 #include "myPthreads.h"
+#include <ucontext.h>
 
 
 cola_hilos cola;
 my_pthread *hilo_actual = NULL;
 int tid_contador = 1;
+int hilos_activos = 0;
+ucontext_t contexto_principal;
 
 void cola_init(cola_hilos *cola) {
     cola->head = NULL;
@@ -72,6 +75,8 @@ int my_pthread_create(my_pthread **hilo, tipo_scheduler tipo, void (*start_routi
 
     if (hilo) *hilo = nuevo_hilo;
 
+    hilos_activos++;
+
     return 0;
 }
 
@@ -95,6 +100,12 @@ void my_pthread_end(void *retval) {
     hilo_actual->retval = retval;
     tipo_scheduler tipo = hilo_actual->scheduler;
     sacar(hilo_actual,tipo);
+    
+    hilos_activos--;
+    
+    if (hilos_activos == 0) {
+        setcontext(&contexto_principal); // Vuelve al main
+    }
     
     if (hilo_actual->thread_esperando != NULL) {
 
