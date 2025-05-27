@@ -81,10 +81,16 @@ void manejador_timer(int signum) {
             hilo_actual->estado = LISTO;
             encolar(&cola_RR, hilo_actual);
         }
+
+        if(hilo_actual->scheduler == TIEMPOREAL){
+            hilo_actual->estado = LISTO;
+            hilo_actual->deadlineSeconds = hilo_actual->deadlineSeconds + 100;
+        }
         
         hilo_actual->estado = LISTO;
         // Para SORTEO no hacemos nada, los hilos permanecen en la lista y en real igual
     }
+    //printf("id:%d\n", hilo_actual->deadlineSeconds);
     scheduler();
 }
 
@@ -107,7 +113,21 @@ void iniciar_timer_scheduler() {
     setitimer(ITIMER_REAL, &timer, NULL);
 }
 
+my_pthread* encontrar_mas_cercano() {
+    if (lista_real_time.head == NULL) return NULL;
 
+    nodo* nodo_actual = lista_real_time.head;
+    my_pthread* mas_cercano = nodo_actual->hilo;
+
+    while (nodo_actual != NULL) {
+        if (nodo_actual->hilo->deadlineSeconds < mas_cercano->deadlineSeconds) {
+            mas_cercano = nodo_actual->hilo;
+        }
+        nodo_actual = nodo_actual->siguiente;
+    }
+
+    return mas_cercano;
+}
 
 my_pthread *scheduler_rr() {
     return desencolar(&cola_RR);
@@ -119,8 +139,10 @@ my_pthread *scheduler_rt() {
         printf("Real time: Cola vacía\n");
         return NULL;
     }
-    nodo *actual = lista_real_time.head;
-    return actual->hilo;
+
+    my_pthread* actual = encontrar_mas_cercano();
+    
+    return actual;
 }
 
 my_pthread *scheduler_lottery() {
@@ -218,18 +240,16 @@ int quitar_hilo_de_cola(cola_hilos *cola, my_pthread *hilo) {
 void sacar(my_pthread* hilo, tipo_scheduler tipo){
 
   if (tipo == RR) {
-      printf("Borrado de la cola RR\n");
+      //printf("Borrado de la cola RR\n");
       quitar_hilo_de_cola(&cola_RR, hilo);
   } else if (tipo== SORTEO) {
-      printf("Borrado de la cola LT\n");
+      //printf("Borrado de la cola LT\n");
       quitar_hilo_de_cola(&cola_lottery, hilo);
   } else if (tipo == TIEMPOREAL) {
       //printf("Borrado de la cola RT\n");
       quitar_hilo_de_cola(&lista_real_time, hilo);
   }
 }
-
-
 
 
 void scheduler() {
@@ -239,21 +259,22 @@ void scheduler() {
     
      if(tipo == RR){
         //printf("RR2\n");
-        imprimir_cola_rr(&cola_RR);
+        //imprimir_cola_rr(&cola_RR);
         hilo_actual = scheduler_rr();
 
     } else if(tipo == TIEMPOREAL){
         //printf("RT2\n");
         //imprimir_lista_real_time(&lista_real_time);
         hilo_actual = scheduler_rt();
+        
     }else{
         //printf("LT2\n");
-        imprimir_cola_sorteo(&cola_lottery);
+        //imprimir_cola_sorteo(&cola_lottery);
         hilo_actual = scheduler_lottery();
     }
     
     if (hilo_actual == NULL) {
-        printf("No hay más hilos activos. Saliendo...\n");
+        //printf("No hay más hilos activos. Saliendo...\n");
         return;
     }
         
@@ -331,6 +352,8 @@ void insertar_ordenado_por_prioridad(cola_hilos *cola, my_pthread *hilo) {
 void meter(tipo_scheduler tipo, my_pthread* hilo) {
     if (tipo == TIEMPOREAL) {
         insertar_ordenado_por_prioridad(&lista_real_time, hilo);
+        printf("HOLA\n");
+
     } else if(tipo == RR) {
         encolar(&cola_RR, hilo);   
     } else {
