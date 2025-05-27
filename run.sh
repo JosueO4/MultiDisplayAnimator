@@ -1,6 +1,6 @@
 #!/bin/bash
 
-WIDTH=50
+WIDTH=40
 HEIGHT=10
 POS1_X=100
 POS1_Y=100
@@ -11,7 +11,6 @@ POS3_Y=100
 
 make animacion
 [ ! -f client ] && gcc client.c -o client
-
 
 gnome-terminal --geometry=${WIDTH}x${HEIGHT}+0+0 -- bash -c "./testCurses; exec bash"
 sleep 1

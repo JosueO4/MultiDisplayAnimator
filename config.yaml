@@ -6,9 +6,9 @@ ventana:
 figuras:
   - inicio: 1000
     fin: 2000000
-    pos_x_inicio: 10
+    pos_x_inicio: -5
     pos_y: 2
-    pos_x_final: 80
+    pos_x_final: 200
     angulo: 90
     periodo: 200
     figura: |

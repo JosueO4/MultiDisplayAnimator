@@ -12,9 +12,9 @@
 
 #define PORT 12345
 #define MAX_CLIENTS 2
-#define CLIENT_WIDTH 100
+#define CLIENT_WIDTH 40
 #define TOTAL_WIDTH (MAX_CLIENTS * CLIENT_WIDTH)
-
+#define FIG_SIZE 5
 
 typedef struct {
     int fd;
@@ -54,7 +54,7 @@ my_mutex mutex_pantalla;
 volatile int fin_animacion = 0;
 int num_figuras = 0;
 figura_anim figuras[MAX_FIGURAS];
-
+int global_pos_x = -FIG_SIZE;
 
 void leer_figuras_yaml(const char *filename) {
     FILE *file = fopen(filename, "r");
@@ -151,7 +151,6 @@ void hilo_animacion_socket(void *arg) {
     hilo_args *args = (hilo_args*)arg;
     int idx = args->idx;
     figura_anim *f = &figuras[idx];
-
     int elapsed = 0;
     int duracion = f->fin_ms - f->inicio_ms;
     int angulo = f->angulo;
@@ -160,25 +159,26 @@ void hilo_animacion_socket(void *arg) {
     usleep(f->inicio_ms * 1000);
 
     while (elapsed < duracion && f->pos_x_inicio < f->pos_x_final) {
-
+        
         if (elapsed % f->periodo_angulo == 0) {
             my_mutex_lock(args->mutex);
             rotar(f, angulo);
             my_mutex_unlock(args->mutex);
         }
-
+        
         my_mutex_lock(args->mutex);
 
         // Por cada cliente construimos el frame
         for (int i = 0; i < num_clients; i++) {
+
             char frame[2048] = "\033[H\033[2J"; // limpiar pantalla
 
-            for (int row = 0; row < f->fig_rows; row++) {
+            for (int row = 0; row < FIG_SIZE; row++) {
                 for (int col = 0; col < CLIENT_WIDTH; col++) {
                     int global_col = clients[i].offset + col;
-                    int fig_col = global_col - f->pos_x_inicio;
+                    int fig_col = global_col - global_pos_x;
             
-                    if (fig_col >= 0 && fig_col < f->fig_cols) {
+                    if (fig_col >= 0 && fig_col < FIG_SIZE) {
                         frame[strlen(frame)] = f->figura[row][fig_col];
                     } else {
                         frame[strlen(frame)] = ' ';
@@ -192,8 +192,11 @@ void hilo_animacion_socket(void *arg) {
         }
 
         my_mutex_unlock(args->mutex);
-
+        
         f->pos_x_inicio++;
+        global_pos_x++;
+        if (global_pos_x > TOTAL_WIDTH) global_pos_x = -FIG_SIZE;
+        printf("%d\n",f->pos_x_inicio);
         usleep(100000);
         elapsed += 100;
 
