@@ -11,17 +11,15 @@
 #define MAX_FIGURAS 10
 
 #define PORT 12345
-#define MAX_CLIENTS 2
-#define CLIENT_WIDTH 40
-#define TOTAL_WIDTH (MAX_CLIENTS * CLIENT_WIDTH)
+int CLIENT_WIDTH; 
+int TOTAL_WIDTH = 0; // Ancho total de la ventana
 #define FIG_SIZE 5
-
 typedef struct {
     int fd;
     int offset; // Posición inicial (0, 40, 80...)
 } Client;
-
-Client clients[MAX_CLIENTS];
+int MAX_CLIENTS;
+Client *clients;
 int num_clients = 0;
 
 
@@ -47,11 +45,9 @@ extern cola_hilos cola_lottery;
 extern cola_hilos lista_real_time;
 extern int fig_rows, fig_cols;
 extern int ventana_rows, ventana_cols;
-extern int tiempo_inicio_ms, tiempo_fin_ms;
 extern ucontext_t contexto_principal;
-int monitores = 2;
+int monitores;
 my_mutex mutex_pantalla;
-volatile int fin_animacion = 0;
 int num_figuras = 0;
 figura_anim figuras[MAX_FIGURAS];
 int global_pos_x = -FIG_SIZE;
@@ -62,11 +58,18 @@ void leer_figuras_yaml(const char *filename) {
     char line[256];
     int leyendo_figura = 0, fig_idx = -1, row = 0;
     while (fgets(line, sizeof(line), file)) {
-        if (strstr(line, "rows:")) {
+        if(strstr(line, "monitores:")) {
+            monitores = atoi(strchr(line, ':') + 1);
+            MAX_CLIENTS = monitores;
+        }
+        else if (strstr(line, "height:")) {
             ventana_rows = atoi(strchr(line, ':') + 1);
-        } else if (strstr(line, "columns:")) {
+        } else if (strstr(line, "width:")) {
             ventana_cols = atoi(strchr(line, ':') + 1);
-        } else if (strstr(line, "- inicio:")) {
+            CLIENT_WIDTH = ventana_cols;
+            TOTAL_WIDTH = MAX_CLIENTS * CLIENT_WIDTH;
+
+        }else if (strstr(line, "- inicio:")) {
             fig_idx++;
             num_figuras++;
             row = 0;
@@ -108,6 +111,7 @@ void leer_figuras_yaml(const char *filename) {
     }
     fclose(file);
 }
+
 typedef struct {
     int idx;
     my_mutex *mutex;
@@ -238,7 +242,12 @@ void hilo_animacion_socket(void *arg) {
 
 int main() {
 
-
+    leer_figuras_yaml("config.yaml");
+    clients = malloc(monitores * sizeof(Client));
+    if (!clients) {
+        perror("Error al asignar memoria para los clientes");
+        exit(1);
+    }
     int server_fd, new_socket;
     struct sockaddr_in address;
     int addrlen = sizeof(address);
@@ -289,13 +298,16 @@ int main() {
     hiloPrincipal.scheduler = tipo;
     hilo_actual = &hiloPrincipal;
 
-    leer_figuras_yaml("config.yaml");
-
+    //leer_figuras_yaml("config.yaml");
+    printf("'''''''''''''''''''''''''''''''''''''''''''''''\n");
+    printf("CLIENTE WIDTH: %d\n", CLIENT_WIDTH);
+    printf("TOTAL WIDTH: %d\n", TOTAL_WIDTH);
+    printf("''''''''''''''''''''''''''''''''''''''''''''\n");
     initscr();
     noecho();
     curs_set(FALSE);
     nodelay(stdscr, TRUE);
-    resizeterm(ventana_rows, ventana_cols);
+    
 
     my_mutex mutex_pantalla;
     mutex_pantalla.cola_esperando = &cola;
@@ -318,5 +330,6 @@ int main() {
     scheduler();
 
     endwin();
+    free(clients);
     return 0;
 }

@@ -1,7 +1,8 @@
 
 ventana:
-  rows: 200
-  columns: 200
+  monitores: 4
+  width: 45
+  height: 35
 
 figuras:
   - inicio: 1000

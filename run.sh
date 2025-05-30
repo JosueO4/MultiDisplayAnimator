@@ -1,7 +1,8 @@
 #!/bin/bash
 
-WIDTH=40
-HEIGHT=10
+WIDTH=$(grep 'width:' config.yaml | awk '{print $2}')
+HEIGHT=$(grep 'height:' config.yaml | awk '{print $2}')
+MONITORES=$(grep 'monitores:' config.yaml | awk '{print $2}')
 POS1_X=100
 POS1_Y=100
 POS2_X=600
@@ -14,6 +15,8 @@ make animacion
 
 gnome-terminal --geometry=${WIDTH}x${HEIGHT}+0+0 -- bash -c "./testCurses; exec bash"
 sleep 1
-gnome-terminal --geometry=${WIDTH}x${HEIGHT}+${POS1_X}+${POS1_Y} -- bash -c "./client; exec bash"
-gnome-terminal --geometry=${WIDTH}x${HEIGHT}+${POS2_X}+${POS2_Y} -- bash -c "./client; exec bash"
-
+for ((i=0; i<MONITORES; i++)); do
+    POS_X=$((100 + i * 500)) # Calcula la posición X para cada cliente
+    POS_Y=100
+    gnome-terminal --geometry=${WIDTH}x${HEIGHT}+${POS_X}+${POS_Y} -- bash -c "./client; exec bash"
+done
