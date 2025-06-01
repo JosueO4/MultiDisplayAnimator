@@ -1,20 +1,79 @@
 
+scheduler: "TIEMPOREAL"
+
 ventana:
-  monitores: 4
+  monitores: 3
   width: 45
-  height: 35
+  height: 40
 
 figuras:
   - inicio: 1000
-    fin: 2000000
-    pos_x_inicio: -5
+    fin: 10000
+    pos_x_inicio: 0
     pos_y: 2
+    pos_x_final: 100
+    angulo: 0
+    periodo: 200
+    figura: |
+      | | | |_|_| | | | | |
+      |.|-|'|-|-|`|-|.|_| |
+      |'|-|O|-|-|-|O|-|-|'|
+  - inicio: 3000
+    fin: 100000
+    pos_x_inicio: 30
+    pos_y: 8
+    pos_x_final: 200
+    angulo: 0
+    periodo: 200
+    figura: |
+      | | | |_|_| | | | | |
+      |.|-|'|-|-|`|-|.|_| |
+      |'|-|O|-|-|-|O|-|-|'|
+  - inicio: 1000
+    fin: 15000
+    pos_x_inicio: 100
+    pos_y: 14
+    pos_x_final: 0
+    angulo: 0
+    periodo: 200
+    figura: |
+      | | | | | |_|_| | | |
+      | |_|.|-|`|-|-|'|-|.|
+      |'|-|-|O|-|-|-|O|-|'|
+  - inicio: 3000
+    fin: 100000
+    pos_x_inicio: 500
+    pos_y: 20
+    pos_x_final: 30
+    angulo: 0
+    periodo: 200
+    figura: |
+      | | | | | |_|_| | | |
+      | |_|.|-|`|-|-|'|-|.|
+      |'|-|-|O|-|-|-|O|-|'|
+  - inicio: 5000
+    fin: 12000
+    pos_x_inicio: 30
+    pos_y: 26
     pos_x_final: 200
     angulo: 90
-    periodo: 200
+    periodo: 300
     figura: |
       | | |x| | |
       | |x|x|x| |
       |x|x|x|x|x|
       | |x|x|x| |
       | |x|x|x| |
+  - inicio: 5000
+    fin: 100000
+    pos_x_inicio: 40
+    pos_y: 32
+    pos_x_final: 400
+    angulo: 90
+    periodo: 200
+    figura: |
+      | | |x| | |
+      |x|x|x|x|x|
+      |x| | | |x|
+      |x|x|x|x|x|
+      | | |x| | |

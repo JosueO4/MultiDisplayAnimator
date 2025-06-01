@@ -1,4 +1,5 @@
 #include "myPthreads.h"
+#include "scheduler.h"
 #include <sys/time.h>
 extern cola_hilos cola;
 extern cola_hilos cola_RR;
@@ -9,51 +10,33 @@ int contador_global = 0;
 my_mutex mutex_global;
 extern ucontext_t contexto_principal;
 
+/* Función: Ejemplo para mostrar escritura en un valor de forma ordenada y segura
+*/
+
 void contador_seguro(void *arg) {
     char *nombre = (char *)arg;
-    for(int i = 0; i < 1000; i++) {
-        my_mutex_lock(&mutex_global);    // Entrar a la sección crítica
+    for(int i = 0; i < 10; i++) {
+        my_mutex_lock(&mutex_global);
 
         int valor = contador_global;
         valor++;
         contador_global = valor;
 
-        my_mutex_unlock(&mutex_global);  // Salir de la sección crítica
+        my_mutex_unlock(&mutex_global);
+        printf("Valor: %d\n",contador_global);
         
-        printf("VAlor: %d\n",contador_global);
-        // Sin yield aquí para probar contención
     }
 
     printf("Hilo [%s] terminado\n", nombre);
     my_pthread_end(NULL);
 }
 
-void hello(void *arg) {
-    char *str = (char *)arg;
-    for(int i = 0; i < 5; i++) {
-        printf("Hilo [%s] iteracion %d\n", str, i);
-        usleep((rand() % 500 + 100) * 1000);
-        if (i < 4) {  // Solo hacer yield si no es la última iteración
-            my_pthread_yield();
-        }
-    }
-    printf("Hilo [%s] terminando...\n", str);
-    my_pthread_end(NULL);
-}
-
-void hello_fast(void *arg){
-    char *str = (char *)arg;
-    for(int i = 0; i < 5; i++) {
-        printf("Hilo [%s] iteracion %d\n", str, i);
-        my_pthread_yield();
-    }
-    my_pthread_end(NULL);
-}
-
-
 
 int main() {
-    tipo_scheduler tipo = RR;  // Podés probar también con Lottery o Tiempo Real
+
+    printf("Programa para mostrar funcionamiento de change schduler: (y de paso mutex)\n");
+
+    tipo_scheduler tipo = RR;
 
     cola_init(&cola);
     cola_init(&cola_RR);
@@ -67,21 +50,37 @@ int main() {
     hilo_actual = &hiloPrincipal;
     
     printf("Hilo principal creado\n");
+
     mutex_global.cola_esperando = &cola;
-    my_mutex_init(&mutex_global); // Inicializar el mutex
-    
-    printf("HICE el mutex BIEN\n");
+    my_mutex_init(&mutex_global); 
     
     my_pthread *h1, *h2, *h3, *h4;
 
-    my_pthread_create(&h1, tipo, contador_seguro, "A", 0);
-    my_pthread_create(&h2, tipo, contador_seguro, "B", 0);
-    my_pthread_create(&h3, tipo, contador_seguro, "C", 0);
-    my_pthread_create(&h4, tipo, contador_seguro, "D", 0);
+    my_pthread_create(&h1, tipo, contador_seguro, "A", 1000);
+    my_pthread_create(&h2, tipo, contador_seguro, "B", 3000);
+    my_pthread_create(&h3, tipo, contador_seguro, "C", 5000);
+    my_pthread_create(&h4, tipo, contador_seguro, "D", 2000);
     
-    printf("HICE LOS HILOS BIEN\n");
-    
-    getcontext(&contexto_principal); // Guarda el contexto principal
+    printf("Se han creado 4 hilos de RR\n");
+
+    imprimir_cola_rr(&cola_RR);
+
+    printf("Ahora cambiamos de RR a TIEMPOREAL\n");
+
+    hiloPrincipal.scheduler = TIEMPOREAL;
+    my_pthread_chsched(h1,TIEMPOREAL);
+    my_pthread_chsched(h2,TIEMPOREAL);
+    my_pthread_chsched(h3,TIEMPOREAL);
+    my_pthread_chsched(h4,TIEMPOREAL);
+
+    printf("Cola de RR:\n");
+    imprimir_cola_rr(&cola_RR);
+    printf("Cola de TIEMPOREAL:\n");
+    imprimir_lista_real_time(&lista_real_time);
+
+    printf("Se ejecuta para probar que todo funciona:\n");
+
+    getcontext(&contexto_principal);
     iniciar_timer_scheduler();
     scheduler();
 
