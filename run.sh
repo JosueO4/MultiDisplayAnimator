@@ -7,7 +7,7 @@ MONITORES=$(grep 'monitores:' config.yaml | awk '{print $2}')
 make animacion
 [ ! -f client ] && gcc client.c -o client
 
-gnome-terminal --geometry=${WIDTH}x${HEIGHT}+0+0 -- bash -c "./testCurses; exec bash"
+gnome-terminal --geometry=${WIDTH}x${HEIGHT}+0+0 -- bash -c "./animar -c config.yaml; exec bash"
 sleep 1
 for ((i=0; i<MONITORES; i++)); do
     POS_X=$((i * WIDTH))

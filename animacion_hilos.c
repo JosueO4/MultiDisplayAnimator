@@ -369,9 +369,22 @@ void hilo_animacion_socket(void *arg) {
 }
 
 
-int main() {
-
-    leer_figuras_yaml("config.yaml");
+int main(int argc, char *argv[]) {
+    int opt;
+    char configFile[256]; // Archivo de configuración por defecto
+    while ((opt = getopt(argc, argv, "c:")) != -1) {
+        switch (opt) {
+            case 'c':
+                strncpy(configFile, argv[2], sizeof(configFile) - 1);
+                configFile[sizeof(configFile) - 1] = '\0';
+                break;
+            default:
+                fprintf(stderr, "Uso: %s -c [archivo_configuracion]\n", argv[2]);
+                exit(EXIT_FAILURE);
+                 
+        }
+    }
+    leer_figuras_yaml(configFile);
     clients = malloc(monitores * sizeof(Client));
     if (!clients) {
         perror("Error al asignar memoria para los clientes");

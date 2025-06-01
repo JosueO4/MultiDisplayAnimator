@@ -1,5 +1,5 @@
 
-scheduler: "TIEMPOREAL"
+scheduler: "SORTEO"
 
 ventana:
   monitores: 3
