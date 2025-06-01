@@ -1,4 +1,5 @@
 #include "myPthreads.h"
+#include "scheduler.h"
 #include <ncurses.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,7 +55,10 @@ int monitores;
 my_mutex mutex_pantalla;
 int num_figuras = 0;
 figura_anim figuras[MAX_FIGURAS];
-tipo_scheduler tipo;
+
+// Si no se especifica es siempre RR
+
+tipo_scheduler tipo = RR;
 int CLIENT_WIDTH; 
 int TOTAL_WIDTH = 0; 
 
